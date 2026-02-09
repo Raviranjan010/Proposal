@@ -36,7 +36,7 @@ const Contact = ({ answers }) => {
                 console.error('Failed to send:', data);
                 setStatus('error');
                 // Show the EXACT error from the backend for debugging
-                alert(`Error: ${data.message}\nDetails: ${data.error || 'No details'}\n\nPlease screenshot this and send to Ravi!`);
+                alert(`Error: ${data.message}\nDetails: ${data.error || 'No details'}\n\nPlease screenshot this and send to Ravi! on instagram👉 raviranjankashyap7`);
             }
         } catch (error) {
             console.error('Error:', error);
