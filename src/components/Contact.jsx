@@ -40,7 +40,12 @@ const Contact = ({ answers }) => {
             } else {
                 console.error('Failed to send:', data);
                 setStatus('error');
+<<<<<<< HEAD
                 setErrorMessage(data.message || 'Something went wrong. Please try again.');
+=======
+                // Show the EXACT error from the backend for debugging
+                alert(`Error: ${data.message}\nDetails: ${data.error || 'No details'}\n\nPlease screenshot this and send to Ravi! on instagram👉 raviranjankashyap7`);
+>>>>>>> 2df8f610a6d7ca5b0a6dc70c829b13578b25c814
             }
         } catch (error) {
             console.error('Error:', error);
