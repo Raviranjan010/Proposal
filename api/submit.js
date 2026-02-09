@@ -31,30 +31,51 @@ let isConnected = false;
 
 async function connectToDatabase() {
     if (isConnected) {
+        console.log('Using existing MongoDB connection');
         return;
     }
 
     try {
-        const db = await mongoose.connect(process.env.MONGODB_URI);
+        console.log('Creating new MongoDB connection...');
+        const db = await mongoose.connect(process.env.MONGODB_URI, {
+            serverSelectionTimeoutMS: 5000, // Fail fast if IP is blocked
+        });
         isConnected = db.connections[0].readyState;
-        console.log('MongoDB connected');
+        console.log('MongoDB connected successfully');
     } catch (error) {
         console.error('MongoDB connection error:', error);
-        throw new Error('Database connection failed');
+        throw new Error(`Database connection failed: ${error.message}`);
     }
 }
 
 export default async function handler(req, res) {
+    console.log('API Route hit: /api/submit');
+    console.log('Method:', req.method);
+
+    // Check for Environment Variables
+    if (!process.env.MONGODB_URI) {
+        console.error('Missing MONGODB_URI');
+        return res.status(500).json({ message: 'Server Configuration Error: Missing Database Connection String' });
+    }
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.error('Missing Email Configuration');
+        return res.status(500).json({ message: 'Server Configuration Error: Missing Email Credentials' });
+    }
+
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
     try {
+        console.log('Connecting to database...');
         await connectToDatabase();
+        console.log('Database connected successfully.');
 
         const { answers, proposalResponse, message, contact } = req.body;
+        console.log('Received data:', { proposalResponse, message, contact, answersReceived: !!answers });
 
         // Save to MongoDB
+        console.log('Saving to MongoDB...');
         const newProposal = new Proposal({
             answers,
             proposalResponse,
@@ -63,6 +84,7 @@ export default async function handler(req, res) {
         });
 
         await newProposal.save();
+        console.log('Saved to MongoDB.');
 
         // Configure Nodemailer
         const transporter = nodemailer.createTransport({
@@ -77,10 +99,9 @@ export default async function handler(req, res) {
         let formattedMessage = "💌 New Message from Contact Website\n\n";
 
         // Add Questionnaire Answers
-        // Since 'answers' is an object here, we iterate keys
         if (answers && typeof answers === 'object') {
             Object.entries(answers).forEach(([key, value]) => {
-                if (key !== 'proposalResponse') { // Skip if it's separate
+                if (key !== 'proposalResponse') {
                     formattedMessage += `Question: ${key}\nAnswer: ${value}\n\n`;
                 }
             });
@@ -92,17 +113,23 @@ export default async function handler(req, res) {
 
         const mailOptions = {
             from: process.env.EMAIL_USER,
-            //   to: 'raviranjankashyap7@gmail.com', // Replace with your email or use environment variable
-            to: 'raviranjan01b@gmail.com',
-            subject: 'New Proposal Local Response!',
+            to: 'raviranjan01b@gmail.com', // Explicitly set to your email
+            subject: 'New Proposal Response! 💖',
             text: formattedMessage,
         };
 
+        // Send Email
+        console.log('Sending email...');
         await transporter.sendMail(mailOptions);
+        console.log('Email sent successfully.');
 
         res.status(200).json({ message: 'Success! Proposal saved and email sent.' });
     } catch (error) {
-        console.error('Error handling request:', error);
-        res.status(500).json({ message: 'Internal Server Error', error: error.message });
+        console.error('Detailed Error:', error);
+        res.status(500).json({
+            message: 'Internal Server Error',
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 }
