@@ -40,7 +40,7 @@ const Contact = ({ answers }) => {
         } catch (error) {
             console.error('Error:', error);
             setStatus('error');
-            alert("An error occurred. Please try again.");
+            alert("An error occurred. Please try again. or you can follow me on instagram 👉 @raviranjankashyap7");
         }
     };
 
