@@ -101,44 +101,55 @@ export default async function handler(req, res) {
         await newProposal.save();
         console.log('Saved to MongoDB.');
 
-        // Configure Nodemailer
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
-        });
-
-        // Format Email Content
-        let formattedMessage = "💌 New Message from Contact Website\n\n";
-
-        // Add Questionnaire Answers
-        if (answers && typeof answers === 'object') {
-            Object.entries(answers).forEach(([key, value]) => {
-                if (key !== 'proposalResponse') {
-                    formattedMessage += `Question: ${key}\nAnswer: ${value}\n\n`;
-                }
+        // Send Email (Best Effort)
+        let emailSent = false;
+        try {
+            console.log('Sending email...');
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS,
+                },
             });
+
+            // Format Email Content
+            let formattedMessage = "💌 New Message from Contact Website\n\n";
+
+            // Add Questionnaire Answers
+            if (answers && typeof answers === 'object') {
+                Object.entries(answers).forEach(([key, value]) => {
+                    if (key !== 'proposalResponse') {
+                        formattedMessage += `Question: ${key}\nAnswer: ${value}\n\n`;
+                    }
+                });
+            }
+
+            formattedMessage += `Will you go out with me?\nResponse: ${proposalResponse || 'No response'}\n\n`;
+            formattedMessage += `📝 Final Words:\n${message}\n\n`;
+            formattedMessage += `📞 Contact Info:\n${contact}`;
+
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: 'raviranjan01b@gmail.com', // Explicitly set to your email
+                subject: 'New Proposal Response! 💖',
+                text: formattedMessage,
+            };
+
+            await transporter.sendMail(mailOptions);
+            emailSent = true;
+            console.log('Email sent successfully.');
+        } catch (emailError) {
+            console.error('Email sending failed:', emailError);
+            // We do NOT throw here; we want to return success because DB save worked.
         }
 
-        formattedMessage += `Will you go out with me?\nResponse: ${proposalResponse || 'No response'}\n\n`;
-        formattedMessage += `📝 Final Words:\n${message}\n\n`;
-        formattedMessage += `📞 Contact Info:\n${contact}`;
+        res.status(200).json({
+            message: 'Success!',
+            emailSent,
+            warning: emailSent ? null : 'Proposal saved, but email notification failed.'
+        });
 
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: 'raviranjan01b@gmail.com', // Explicitly set to your email
-            subject: 'New Proposal Response! 💖',
-            text: formattedMessage,
-        };
-
-        // Send Email
-        console.log('Sending email...');
-        await transporter.sendMail(mailOptions);
-        console.log('Email sent successfully.');
-
-        res.status(200).json({ message: 'Success! Proposal saved and email sent.' });
     } catch (error) {
         console.error('Detailed Error:', error);
         res.status(500).json({

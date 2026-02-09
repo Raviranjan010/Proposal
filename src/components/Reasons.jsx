@@ -1,32 +1,32 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Tilt from 'react-parallax-tilt';
-import { Heart, Smile, Star, Coffee, ChevronRight } from 'lucide-react';
+import { Heart, Smile, Star, Coffee, ChevronRight, ArrowRight } from 'lucide-react';
 
 const reasons = [
     {
-        icon: <Heart className="w-20 h-20 text-red-500" />,
+        icon: <Heart className="w-16 h-16 text-pink-500 drop-shadow-lg" />,
         title: "Your Kindness",
         desc: "The way you treat everyone creates a warmth that I want to be around forever.",
-        rotate: -2
+        color: "from-pink-500/20 to-rose-500/20"
     },
     {
-        icon: <Smile className="w-20 h-20 text-yellow-400" />,
+        icon: <Smile className="w-16 h-16 text-amber-400 drop-shadow-lg" />,
         title: "That Smile",
         desc: "It lights up the darkest rooms. I find myself trying to make you laugh just to see it.",
-        rotate: 3
+        color: "from-amber-400/20 to-orange-500/20"
     },
     {
-        icon: <Coffee className="w-20 h-20 text-amber-600" />,
+        icon: <Coffee className="w-16 h-16 text-emerald-500 drop-shadow-lg" />,
         title: "Our Connection",
         desc: "I've never felt so understood by anyone. Talking to you is the best part of my day.",
-        rotate: -1
+        color: "from-emerald-500/20 to-teal-500/20"
     },
     {
-        icon: <Star className="w-20 h-20 text-purple-400" />,
+        icon: <Star className="w-16 h-16 text-purple-500 drop-shadow-lg" />,
         title: "Everything",
         desc: "From the big things to the small details, you are simply amazing.",
-        rotate: 2
+        color: "from-purple-500/20 to-indigo-500/20"
     }
 ];
 
@@ -47,29 +47,37 @@ const Reasons = ({ onComplete }) => {
         enter: (direction) => ({
             x: direction > 0 ? 1000 : -1000,
             opacity: 0,
+            scale: 0.5,
             rotate: direction > 0 ? 20 : -20,
         }),
         center: {
             zIndex: 1,
             x: 0,
             opacity: 1,
-            rotate: reasons[index].rotate,
+            scale: 1,
+            rotate: 0,
         },
         exit: (direction) => ({
             zIndex: 0,
             x: direction < 0 ? 1000 : -1000,
             opacity: 0,
+            scale: 0.5,
+            rotate: direction < 0 ? 20 : -20,
         }),
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-6 relative z-10 overflow-hidden">
-            <h2 className="text-4xl md:text-6xl font-serif text-transparent bg-clip-text bg-gradient-to-r from-pink-200 to-purple-200 mb-12 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
+        <div className="flex flex-col items-center justify-center min-h-screen p-6 relative z-10 overflow-hidden w-full">
+            <motion.h2
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-4xl md:text-6xl font-serif text-transparent bg-clip-text bg-gradient-to-r from-pink-200 to-purple-200 mb-12 drop-shadow-sm text-center"
+            >
                 Why I like you...
-            </h2>
+            </motion.h2>
 
-            <div className="relative w-full max-w-sm h-[500px] flex items-center justify-center">
-                <AnimatePresence initial={false} custom={direction}>
+            <div className="relative w-full max-w-sm h-[450px] flex items-center justify-center perspective-1000">
+                <AnimatePresence initial={false} custom={direction} mode="wait">
                     <motion.div
                         key={index}
                         custom={direction}
@@ -79,9 +87,10 @@ const Reasons = ({ onComplete }) => {
                         exit="exit"
                         transition={{
                             x: { type: "spring", stiffness: 300, damping: 30 },
-                            opacity: { duration: 0.2 }
+                            opacity: { duration: 0.2 },
+                            rotate: { duration: 0.4 }
                         }}
-                        className="absolute cursor-grab active:cursor-grabbing"
+                        className="absolute w-full"
                         drag="x"
                         dragConstraints={{ left: 0, right: 0 }}
                         dragElastic={1}
@@ -92,22 +101,19 @@ const Reasons = ({ onComplete }) => {
                             }
                         }}
                     >
-                        <Tilt tiltMaxAngleX={10} tiltMaxAngleY={10} scale={1.05} transitionSpeed={2500}>
-                            <div className="bg-white p-4 pb-12 shadow-2xl rounded-sm transform transition-all hover:scale-105 duration-300 w-80 md:w-96">
-                                <div className="bg-gray-100 aspect-square mb-4 flex items-center justify-center overflow-hidden relative shadow-inner">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-200 opacity-50" />
-                                    <motion.div
-                                        initial={{ scale: 0.8, opacity: 0 }}
-                                        animate={{ scale: 1, opacity: 1 }}
-                                        transition={{ delay: 0.2 }}
-                                    >
+                        <Tilt tiltMaxAngleX={5} tiltMaxAngleY={5} scale={1.02} transitionSpeed={2000}>
+                            <div className="glass-card p-8 rounded-[2rem] border border-white/20 shadow-2xl relative overflow-hidden group">
+                                <div className={`absolute inset-0 bg-gradient-to-br ${reasons[index].color} opacity-30 group-hover:opacity-50 transition-opacity duration-500`} />
+
+                                <div className="relative z-10 flex flex-col items-center text-center">
+                                    <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(255,255,255,0.1)] backdrop-blur-sm border border-white/10 group-hover:scale-110 transition-transform duration-300">
                                         {reasons[index].icon}
-                                    </motion.div>
+                                    </div>
+                                    <h3 className="text-3xl font-serif text-white mb-4 drop-shadow-sm">{reasons[index].title}</h3>
+                                    <p className="text-lg text-gray-200 leading-relaxed font-light">
+                                        "{reasons[index].desc}"
+                                    </p>
                                 </div>
-                                <h3 className="text-3xl font-serif text-gray-800 text-center mb-2">{reasons[index].title}</h3>
-                                <p className="font-handwriting text-gray-600 text-center text-lg px-2 leading-tight font-serif italic">
-                                    "{reasons[index].desc}"
-                                </p>
                             </div>
                         </Tilt>
                     </motion.div>
@@ -115,19 +121,26 @@ const Reasons = ({ onComplete }) => {
             </div>
 
             <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.05, paddingRight: "2.5rem" }}
+                whileTap={{ scale: 0.95 }}
                 onClick={nextReason}
-                className="mt-8 px-8 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white font-semibold shadow-lg hover:bg-white/20 transition-all flex items-center gap-2 group z-50"
+                className="mt-12 group relative px-10 py-5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white font-semibold text-lg overflow-hidden transition-all shadow-lg hover:bg-white/15"
             >
-                Next Memory <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <span className="relative z-10 flex items-center gap-2">
+                    {index === reasons.length - 1 ? 'Continue' : 'Next Memory'} <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-pink-500/20 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity" />
             </motion.button>
 
             <div className="flex gap-3 mt-8">
                 {reasons.map((_, i) => (
-                    <div
+                    <motion.div
                         key={i}
-                        className={`w-2 h-2 rounded-full transition-all duration-300 ${i === index ? 'bg-pink-500 w-8' : 'bg-white/20'}`}
+                        animate={{
+                            width: i === index ? 32 : 8,
+                            backgroundColor: i === index ? "#ec4899" : "rgba(255,255,255,0.2)"
+                        }}
+                        className="h-2 rounded-full"
                     />
                 ))}
             </div>
