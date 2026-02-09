@@ -26,26 +26,41 @@ try {
     Proposal = mongoose.model('Proposal', ProposalSchema);
 }
 
-// Optimization: Reuse MongoDB connection
-let isConnected = false;
+// Optimization: Reuse MongoDB connection (Global Cache for Serverless)
+let cached = global.mongoose;
+
+if (!cached) {
+    cached = global.mongoose = { conn: null, promise: null };
+}
 
 async function connectToDatabase() {
-    if (isConnected) {
+    if (cached.conn) {
         console.log('Using existing MongoDB connection');
-        return;
+        return cached.conn;
+    }
+
+    if (!cached.promise) {
+        const opts = {
+            bufferCommands: false,
+            serverSelectionTimeoutMS: 5000,
+        };
+
+        console.log('Creating new MongoDB connection...');
+        cached.promise = mongoose.connect(process.env.MONGODB_URI, opts).then((mongoose) => {
+            console.log('MongoDB connected successfully');
+            return mongoose;
+        });
     }
 
     try {
-        console.log('Creating new MongoDB connection...');
-        const db = await mongoose.connect(process.env.MONGODB_URI, {
-            serverSelectionTimeoutMS: 5000, // Fail fast if IP is blocked
-        });
-        isConnected = db.connections[0].readyState;
-        console.log('MongoDB connected successfully');
-    } catch (error) {
-        console.error('MongoDB connection error:', error);
-        throw new Error(`Database connection failed: ${error.message}`);
+        cached.conn = await cached.promise;
+    } catch (e) {
+        cached.promise = null;
+        console.error('MongoDB connection error:', e);
+        throw new Error(`Database connection failed: ${e.message}`);
     }
+
+    return cached.conn;
 }
 
 export default async function handler(req, res) {
