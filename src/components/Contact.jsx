@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import emailjs from '@emailjs/browser';
+// import emailjs from '@emailjs/browser';
 import { Send, Instagram, Phone, Mail } from 'lucide-react';
 import { questions } from './Questionaire';
 
@@ -35,12 +35,13 @@ const Contact = ({ answers }) => {
                 const data = await response.json();
                 console.error('Failed to send:', data);
                 setStatus('error');
-                alert(data.message || "Failed to send. Please try again.");
+                // Show the EXACT error from the backend for debugging
+                alert(`Error: ${data.message}\nDetails: ${data.error || 'No details'}\n\nPlease screenshot this and send to Ravi!`);
             }
         } catch (error) {
             console.error('Error:', error);
             setStatus('error');
-            alert("An error occurred. Please try again. or you can follow me on instagram 👉 @raviranjankashyap7");
+            alert(`Network Error: ${error.message}. Please try again.`);
         }
     };
 
